@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	"io"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -42,7 +43,7 @@ func (l *Logger) WithContext(ctx context.Context) *Logger {
 	zl := l.clone()
 	if traceId, ok := ctx.Value(zl.traceIdKey).(string); ok {
 		zl.traceId = traceId
-		zl.origin.With(zap.String(zl.traceIdKey, zl.traceId))
+		zl.origin = zl.origin.With(zap.String(zl.traceIdKey, zl.traceId))
 	}
 	return zl
 }
@@ -55,7 +56,11 @@ func (l *Logger) WithTraceId(traceId string) *Logger {
 }
 
 func (l *Logger) GenTraceLogger() *Logger {
-	return l.WithTraceId(fmt.Sprintf("%s", uuid.NewV4()))
+	return l.WithTraceId(UUIDV4())
+}
+
+func (l *Logger) TraceIdKey() string {
+	return l.traceIdKey
 }
 
 func (l *Logger) Debug(msg string, fields ...zap.Field) {
@@ -146,4 +151,8 @@ func Panic(msg string, fields ...zap.Field) {
 
 func Fatal(msg string, fields ...zap.Field) {
 	DefaultLogger.Fatal(msg, fields...)
+}
+
+func UUIDV4() string {
+	return strings.ReplaceAll(fmt.Sprintf("%s", uuid.NewV4()), "-", "")
 }
